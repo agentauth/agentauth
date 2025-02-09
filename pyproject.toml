@@ -1,13 +1,19 @@
 [project]
 name = "agentauth"
 version = "0.1.0"
-description = "Add your description here"
+description = "Automated authentication for web agents"
 readme = "README.md"
 authors = [
     { name = "Cole Hecht" }
 ]
-requires-python = ">=3.13"
-dependencies = []
+requires-python = ">=3.11"
+dependencies = [
+    "browser-use>=0.1.36",
+    "browserbase>=1.1.0",
+    "imap-tools>=1.10.0",
+    "pyotp>=2.9.0",
+    "python-dotenv>=1.0.1",
+]
 
 [build-system]
 requires = ["hatchling"]
