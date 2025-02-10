@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import json
 
 from browser_use import Agent, Browser, BrowserConfig
 from browser_use.controller.service import Controller
@@ -37,9 +38,12 @@ class AgentAuth:
         self,
         website: str,
         username: str,
-        cdp_url: str = None
+        cdp_url: str = None,
+        cookies_file: str = None,
+        headless: bool = True,
     ) -> dict:
         browser_config = BrowserConfig(
+            headless=headless,
             cdp_url=cdp_url
         )
         browser = Browser(config=browser_config)
@@ -69,6 +73,10 @@ class AgentAuth:
         
         await browser_context.close()
         await browser.close()
+
+        if cookies_file:
+            with open(cookies_file, 'w') as f:
+                json.dump(cookies, f, indent=2)
 
         return cookies
     
