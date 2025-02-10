@@ -27,6 +27,9 @@ class CredentialManager:
     def load_1password(self):
         pass
 
+    def load_bitwarden(self):
+        pass
+
     def get_credential(self, website: str, username: str) -> Credential:
         for credential in self.credentials:
             if credential.matches_website_and_username(website, username):
