@@ -28,10 +28,8 @@ cookies = await aa.auth(
 - [x] Look at package managers
 - [x] Add license
 - [x] Add example: browser-use
-- [ ] Add example: playwright
-- [ ] Add example: stagehand
-- [ ] Add example: browserbase (cdp)
-- [ ] Add example: magic link email
+- [x] Add example: playwright
+- [x] Add example: browserbase (cdp)
 - [ ] Publish to pip
 - [ ] Add 1Password integration
 - [ ] Use local LLM for email scanning
