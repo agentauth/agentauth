@@ -14,6 +14,7 @@ dependencies = [
     "onepassword-sdk>=0.1.7",
     "pyotp>=2.9.0",
     "python-dotenv>=1.0.1",
+    "langchain>=0.1.0"
 ]
 
 [build-system]

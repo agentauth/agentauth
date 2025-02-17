@@ -52,7 +52,7 @@ class EmailService:
                     """
                     response = llm.invoke(query).content
                     if response.lower() == "no":
-                        print("Did not fine email link.")
+                        print("Did not find email link.")
                         next
                     else:
                         print(f"Found email link: {response}")

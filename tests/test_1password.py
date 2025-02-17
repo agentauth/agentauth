@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 
 from agentauth import AgentAuth
 
-load_dotenv()
+load_dotenv(override=True)
 
 async def main():
     aa = AgentAuth(
