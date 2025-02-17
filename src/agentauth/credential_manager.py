@@ -1,6 +1,8 @@
 import json
 from typing import List
 
+from onepassword.client import Client
+
 from agentauth.credential import Credential
 
 class CredentialManager:
@@ -24,11 +26,49 @@ class CredentialManager:
         self.credentials.extend(new_credentials)
         print(f"Loaded {len(new_credentials)} credentials from {file_path}")
 
-    def load_1password(self):
-        pass
+    async def load_1password(self, service_account_token: str):
+        client = await Client.authenticate(
+            auth=service_account_token,
+            integration_name="1Password Integration",
+            integration_version="v0.1.0"
+        )
 
-    def load_bitwarden(self):
-        pass
+        new_credentials = []
+
+        # Loop over all vaults
+        vaults = await client.vaults.list_all()
+        async for vault in vaults:
+            # Loop over all items in the vault
+            items = await client.items.list_all(vault.id)
+            async for item in items:
+                # Loop over all websites for the item
+                for website in item.websites:
+                    url = website.url
+
+                    # If there is no username or password, do not create a credential
+                    try:
+                        username = await client.secrets.resolve(f"op://{item.vault_id}/{item.id}/username")
+                        password = await client.secrets.resolve(f"op://{item.vault_id}/{item.id}/password")
+                    except:
+                        continue
+
+                    # Add TOTP secret if it exists, but it is optional
+                    totp_secret = ""
+                    try:
+                        totp_secret = await client.secrets.resolve(f"op://{item.vault_id}/{item.id}/totpsecret")
+                    except:
+                        pass
+
+                    credential = Credential(
+                        website=url,
+                        username=username,
+                        password=password,
+                        totp_secret=totp_secret
+                    )
+                    new_credentials.append(credential)
+
+        self.credentials.extend(new_credentials)
+        print(f"Loaded {len(new_credentials)} credentials from 1Password")
 
     def get_credential(self, website: str, username: str) -> Credential:
         for credential in self.credentials:

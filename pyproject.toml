@@ -11,6 +11,7 @@ dependencies = [
     "browser-use>=0.1.36",
     "browserbase>=1.1.0",
     "imap-tools>=1.10.0",
+    "onepassword-sdk>=0.1.7",
     "pyotp>=2.9.0",
     "python-dotenv>=1.0.1",
 ]

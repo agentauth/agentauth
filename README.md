@@ -30,8 +30,10 @@ cookies = await aa.auth(
 - [x] Add example: browser-use
 - [x] Add example: playwright
 - [x] Add example: browserbase (cdp)
-- [ ] Publish to pip
-- [ ] Add 1Password integration
+- [x] Publish to pip
+- [x] Add 1Password integration
 - [ ] Add Bitwarden integration
 - [ ] Use local LLM for email scanning
 - [ ] Allow other LLMs
+- [ ] Expose CredentialManager (ideal doesn't need an extra init method)
+- [ ] Add audit logging

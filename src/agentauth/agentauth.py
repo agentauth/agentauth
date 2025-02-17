@@ -12,15 +12,15 @@ class AgentAuth:
     def __init__(
             self,
             credentials_file: str = None,
+            onepassword_service_account_token: str = None,
             IMAP_SERVER: str = None,
             IMAP_PORT: int = 993,
             IMAP_USERNAME: str = None,
             IMAP_PASSWORD: str = None,
         ):
-        self.credential_manager = CredentialManager()
-
-        if credentials_file:
-            self.credential_manager.load_json(credentials_file)
+        self.credential_manager = None
+        self.credentials_file = credentials_file
+        self.onepassword_service_account_token = onepassword_service_account_token
 
         self.email_service = None
         if IMAP_SERVER and IMAP_PORT and IMAP_USERNAME and IMAP_PASSWORD:
@@ -34,6 +34,15 @@ class AgentAuth:
 
         self.login_start_time = datetime.now(timezone.utc)
 
+    async def setup_credential_manager(self):
+        self.credential_manager = CredentialManager()
+
+        if self.credentials_file:
+            self.credential_manager.load_json(self.credentials_file)
+
+        if self.onepassword_service_account_token:
+            await self.credential_manager.load_1password(self.onepassword_service_account_token)
+
     async def auth(
         self,
         website: str,
@@ -42,6 +51,9 @@ class AgentAuth:
         cookies_file: str = None,
         headless: bool = True,
     ) -> dict:
+        if not self.credential_manager:
+            await self.setup_credential_manager()
+    
         browser_config = BrowserConfig(
             headless=headless,
             cdp_url=cdp_url
