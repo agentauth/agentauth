@@ -1,32 +1,35 @@
 import asyncio
+import json
 import tempfile
 
-from agentauth import AgentAuth
+from agentauth import AgentAuth, CredentialManager
 from browser_use import Agent, Browser
 from browser_use.browser.context import BrowserContext, BrowserContextConfig
 from langchain_openai import ChatOpenAI
 
 async def main():
-    # Initialize AgentAuth with credentials file
-    aa = AgentAuth(
-        credentials_file="credentials.json"
-    )
+    # Create a new credential manager and load credentials file
+    credential_manager = CredentialManager()
+    credential_manager.load_json("credentials.json")
 
-    # Create a temp file to store the cookies
-    cookies_file = tempfile.NamedTemporaryFile(mode='w', suffix='.json')
-    cookies_file_name = cookies_file.name
+    # Initialize AgentAuth with a credential manager
+    aa = AgentAuth(credential_manager=credential_manager)
 
     # Authenticate for a specific website and user; get the session cookies
-    await aa.auth(
+    cookies = await aa.auth(
         "https://opensource-demo.orangehrmlive.com",
-        "Admin",
-        cookies_file=cookies_file_name
+        "Admin"
     )
+
+    # Write the cookies to a temp file
+    cookies_file = tempfile.NamedTemporaryFile(mode='w', suffix='.json')
+    with open(cookies_file.name, 'w') as f:
+        json.dump(cookies, f, indent=2)
 
     # Use browser-use to take some post-login action(s)
     context = BrowserContext(
         browser=Browser(),
-        config=BrowserContextConfig(cookies_file=cookies_file_name)
+        config=BrowserContextConfig(cookies_file=cookies_file.name)
     )
     agent = Agent(
         task="Go to opensource-demo.orangehrmlive.com and update my nickname to be a random silly nickname",

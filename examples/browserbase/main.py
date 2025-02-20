@@ -1,9 +1,12 @@
 import asyncio
 import os
 
-from agentauth import AgentAuth
+from agentauth import AgentAuth, CredentialManager
 from browserbase import Browserbase
+from dotenv import load_dotenv
 from playwright.async_api import async_playwright
+
+load_dotenv(override=True)
 
 BROWSERBASE_API_KEY = os.getenv("BROWSERBASE_API_KEY")
 BROWSERBASE_PROJECT_ID = os.getenv("BROWSERBASE_PROJECT_ID")
@@ -14,10 +17,12 @@ def get_browserbase_session():
     return session
 
 async def main():
-    # Initialize AgentAuth with credentials file
-    aa = AgentAuth(
-        credentials_file="credentials.json"
-    )
+    # Create a new credential manager and load credentials file
+    credential_manager = CredentialManager()
+    credential_manager.load_json("credentials.json")
+
+    # Initialize AgentAuth with a credential manager
+    aa = AgentAuth(credential_manager=credential_manager)
 
     # Authenticate with a remote browser session; get the post-auth cookies
     browserbase_session = get_browserbase_session()

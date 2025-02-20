@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-import json
+import logging
 
 from browser_use import Agent, Browser, BrowserConfig
 from browser_use.controller.service import Controller
@@ -9,22 +9,39 @@ from agentauth.credential_manager import CredentialManager
 from agentauth.email_service import EmailService
 
 class AgentAuth:
+    """
+    AgentAuth is the main class for handling automated web authentication.
+    It supports various authentication methods including username/password,
+    TOTP, email magic links, and email verification codes.
+
+    The class uses browser automation and LLMs to understand and navigate
+    login forms in a human-like manner.
+
+    Args:
+        credential_manager (CredentialManager, optional): Manager for handling credentials.
+            If not provided, a new empty manager will be created.
+        imap_server (str, optional): IMAP server for email verification.
+            Required for magic links and verification codes.
+        imap_port (int, optional): IMAP port number. Defaults to 993.
+        imap_username (str, optional): Email username for IMAP.
+            Required if imap_server is provided.
+        imap_password (str, optional): Email password for IMAP.
+            Required if imap_server is provided.
+    """
+
     def __init__(
             self,
-            credentials_file: str = None,
-            onepassword_service_account_token: str = None,
-            IMAP_SERVER: str = None,
-            IMAP_PORT: int = 993,
-            IMAP_USERNAME: str = None,
-            IMAP_PASSWORD: str = None,
+            credential_manager: CredentialManager = None,
+            imap_server: str = None,
+            imap_port: int = 993,
+            imap_username: str = None,
+            imap_password: str = None,
         ):
-        self.credential_manager = None
-        self.credentials_file = credentials_file
-        self.onepassword_service_account_token = onepassword_service_account_token
-
+        self.credential_manager = credential_manager or CredentialManager()
+        
         self.email_service = None
-        if IMAP_SERVER and IMAP_PORT and IMAP_USERNAME and IMAP_PASSWORD:
-            self.email_service = EmailService(IMAP_SERVER, IMAP_PORT, IMAP_USERNAME, IMAP_PASSWORD)
+        if imap_server and imap_port and imap_username and imap_password:
+            self.email_service = EmailService(imap_server, imap_port, imap_username, imap_password)
 
         self.controller = Controller()
         self.controller.action("Look up the password")(self.lookup_password)
@@ -34,26 +51,47 @@ class AgentAuth:
 
         self.login_start_time = datetime.now(timezone.utc)
 
-    async def setup_credential_manager(self):
-        self.credential_manager = CredentialManager()
+        self._setup_logging()
 
-        if self.credentials_file:
-            self.credential_manager.load_json(self.credentials_file)
-
-        if self.onepassword_service_account_token:
-            await self.credential_manager.load_1password(self.onepassword_service_account_token)
+    def _setup_logging(self):
+        browser_use_logger = logging.getLogger("browser_use")
+        browser_use_logger.handlers.clear()
+        file_handler = logging.FileHandler('agentauth.log')
+        browser_use_logger.addHandler(file_handler)
+        browser_use_logger.propagate = False
 
     async def auth(
         self,
         website: str,
         username: str,
         cdp_url: str = None,
-        cookies_file: str = None,
         headless: bool = True,
     ) -> dict:
-        if not self.credential_manager:
-            await self.setup_credential_manager()
-    
+        """
+        Performs automated authentication on the specified website.
+
+        This method will:
+        1. Launch a browser (local or remote)
+        2. Navigate to the website
+        3. Attempt to log in using available credentials
+        4. Handle any additional verification steps (TOTP, email verification)
+        5. Return the authenticated session cookies
+
+        Args:
+            website (str): The URL of the website to authenticate with
+            username (str): The username to authenticate with
+            cdp_url (str, optional): CDP URL for remote browser service.
+                Recommended for production to avoid bot detection.
+            headless (bool, optional): Whether to run the browser in headless mode.
+                Defaults to True. Set to False for debugging.
+
+        Returns:
+            dict: Session cookies from the authenticated browser session
+
+        Raises:
+            RuntimeError: If authentication fails
+            LookupError: If required credentials are not found
+        """
         browser_config = BrowserConfig(
             headless=headless,
             cdp_url=cdp_url
@@ -85,10 +123,6 @@ class AgentAuth:
         
         await browser_context.close()
         await browser.close()
-
-        if cookies_file:
-            with open(cookies_file, 'w') as f:
-                json.dump(cookies, f, indent=2)
 
         return cookies
     

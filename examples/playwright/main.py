@@ -1,13 +1,15 @@
 import asyncio
 
-from agentauth import AgentAuth
+from agentauth import AgentAuth, CredentialManager
 from playwright.async_api import async_playwright
 
 async def main():
-    # Initialize AgentAuth with credentials file
-    aa = AgentAuth(
-        credentials_file="credentials.json"
-    )
+    # Create a new credential manager and load credentials file
+    credential_manager = CredentialManager()
+    credential_manager.load_json("credentials.json")
+
+    # Initialize AgentAuth with a credential manager
+    aa = AgentAuth(credential_manager=credential_manager)
 
     # Authenticate and get the post-auth cookies
     cookies = await aa.auth(
@@ -17,7 +19,7 @@ async def main():
 
     # Take some authenticated action(s) using the cookies
     async with async_playwright() as playwright:
-        browser = await playwright.chromium.launch()
+        browser = await playwright.chromium.launch(headless=False)
 
         # Create a new page and add the cookies from AgentAuth
         page = await browser.new_page()
