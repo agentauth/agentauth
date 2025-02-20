@@ -1,10 +1,10 @@
 # AgentAuth
 
 AgentAuth is a Python package that helps automate web authentication by simulating human-like login behavior. It supports various authentication methods including:
+- Standard username/password login
+- Time-based One-Time Passwords (TOTP)
 - Email magic links
 - Email verification codes
-- Time-based One-Time Passwords (TOTP)
-- Standard username/password login
 
 ## Features
 
@@ -24,14 +24,16 @@ pip install agentauth
 ```python
 from agentauth import AgentAuth, CredentialManager
 
-# Initialize credential manager and load credentials
+# Load credentials from a file and/or password manager
 credential_manager = CredentialManager()
-credential_manager.load_file("credentials.json")  # Load from local JSON file
+credential_manager.load_file("credentials.json")
+credential_manager.load_1password("1password_service_account_token")
 
+# Creat an instance of AgentAuth with access to credentials and an email inbox
 aa = AgentAuth(
     credential_manager=credential_manager,
 
-    # Connect an email inbox for authentication requiring email links or codes
+    # (Optional) Connect an email inbox for authentication requiring email links or codes
     imap_server="imap.example.com",
     imap_username="agent@example.com",
     imap_password="agent_email_password"
