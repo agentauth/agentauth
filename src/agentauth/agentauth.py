@@ -142,7 +142,7 @@ class AgentAuth:
 
         try:
             self.lookup_totp()
-            task_components.append("- If a TOTP code is needed,look up the TOTP code")
+            task_components.append("- If a TOTP code is needed, look up the TOTP code")
         except LookupError:
             pass
 
