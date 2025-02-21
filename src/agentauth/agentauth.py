@@ -141,9 +141,8 @@ class AgentAuth:
             pass
 
         try:
-            totp = self.lookup_totp()
+            self.lookup_totp()
             task_components.append("- If a TOTP code is needed,look up the TOTP code")
-            sensitive_data["x_totp"] = totp
         except LookupError:
             pass
 
