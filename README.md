@@ -52,6 +52,7 @@ cookies = await aa.auth(
 # To Do
 
 - [ ] Add Bitwarden integration
+- [ ] Add Keeper integration
 - [ ] Use local LLM for email scanning
 - [ ] Allow other LLMs
 
