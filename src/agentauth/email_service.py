@@ -52,10 +52,8 @@ class EmailService:
                     """
                     response = llm.invoke(query).content
                     if response.lower() == "no":
-                        print("Did not find email link.")
                         next
                     else:
-                        print(f"Found email link: {response}")
                         return response
                     
             time.sleep(3)

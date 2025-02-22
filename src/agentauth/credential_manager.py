@@ -3,6 +3,7 @@ from typing import List
 
 from onepassword.client import Client
 
+from agentauth import logger
 from agentauth.credential import Credential
 
 class CredentialManager:
@@ -66,7 +67,7 @@ class CredentialManager:
                 new_credentials.append(credential)
         
         self.credentials.extend(new_credentials)
-        print(f"Loaded {len(new_credentials)} credentials from {file_path}")
+        logger.info("loaded credential(s) from JSON file", file_path=file_path, count=len(new_credentials))
 
     async def load_1password(self, service_account_token: str):
         """
@@ -113,7 +114,7 @@ class CredentialManager:
                     # Add TOTP secret if it exists, but it is optional
                     totp_secret = ""
                     try:
-                        totp_secret = await client.secrets.resolve(f"op://{item.vault_id}/{item.id}/totpsecret")
+                        totp_secret = await client.secrets.resolve(f"op://{item.vault_id}/{item.id}/one-time password")
                     except:
                         pass
 
@@ -126,7 +127,7 @@ class CredentialManager:
                     new_credentials.append(credential)
 
         self.credentials.extend(new_credentials)
-        print(f"Loaded {len(new_credentials)} credentials from 1Password")
+        logger.info("loaded credential(s) from 1Password", count=len(new_credentials))
 
     def get_credential(self, website: str, username: str) -> Credential:
         """

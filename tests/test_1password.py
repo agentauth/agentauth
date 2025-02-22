@@ -9,7 +9,7 @@ import os
 
 from dotenv import load_dotenv
 
-from agentauth import AgentAuth, CredentialManager
+from agentauth import CredentialManager
 
 load_dotenv(override=True)
 

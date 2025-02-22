@@ -5,8 +5,10 @@ from browser_use import Agent, Browser, BrowserConfig
 from browser_use.controller.service import Controller
 
 from agentauth import llm
+from agentauth import logger
 from agentauth.credential_manager import CredentialManager
 from agentauth.email_service import EmailService
+from agentauth.id_generator import generate_id
 
 class AgentAuth:
     """
@@ -36,6 +38,7 @@ class AgentAuth:
             imap_port: int = 993,
             imap_username: str = None,
             imap_password: str = None,
+            agent_id: str = None,
         ):
         self.credential_manager = credential_manager or CredentialManager()
         
@@ -43,11 +46,12 @@ class AgentAuth:
         if imap_server and imap_port and imap_username and imap_password:
             self.email_service = EmailService(imap_server, imap_port, imap_username, imap_password)
 
+        self.agent_id = agent_id or generate_id()
+
         self.controller = Controller()
-        self.controller.action("Look up the password")(self.lookup_password)
         self.controller.action("Look up the TOTP code")(self.lookup_totp)
-        self.controller.action("Look up an email code")(self.lookup_email_code)
-        self.controller.action("Look up an email link")(self.lookup_email_link)
+        self.controller.action("Look up the email code")(self.lookup_email_code)
+        self.controller.action("Look up the email link")(self.lookup_email_link)
 
         self.login_start_time = datetime.now(timezone.utc)
 
@@ -92,6 +96,13 @@ class AgentAuth:
             RuntimeError: If authentication fails
             LookupError: If required credentials are not found
         """
+        logger.info(
+            "login attempt initiated",
+            agent_id=self.agent_id,
+            website=website,
+            username=username
+        )
+
         browser_config = BrowserConfig(
             headless=headless,
             cdp_url=cdp_url
@@ -112,11 +123,13 @@ class AgentAuth:
             browser_context=browser_context,
             controller=self.controller,
         )
-
+        
         history = await agent.run()
 
         if not history.is_done():
             raise RuntimeError("Failed to authenticate")
+        
+        logger.info("authentication successful", agent_id=self.agent_id)
 
         session = await browser_context.get_session()
         cookies =  await session.context.cookies()
@@ -133,23 +146,20 @@ class AgentAuth:
             "x_username": username
         }
 
-        try:
+        if self._can_lookup_password():
             password = self.lookup_password()
-            task_components.append(f"""- If a password is needed, use the password "x_password" """)
             sensitive_data["x_password"] = password
-        except LookupError:
-            pass
+            task_components.append(f"""- If a password is needed, use the password "x_password" """)
 
-        try:
-            self.lookup_totp()
+        if self._can_lookup_totp():
             task_components.append("- If a TOTP code is needed, look up the TOTP code")
-        except LookupError:
-            pass
 
-        if self.email_service:
+        if self._can_lookup_email_code():
             task_components.append("- If an email code is needed, look up the email code")
+
+        if self._can_lookup_email_link():
             task_components.append("- If an email link is needed, look up the email link and navigate to the link")
-        
+
         # Prevent social sign in for now... may revist this later
         task_components.append("- Do not attempt to Sign in with Google.")
         task_components.append("- Do not attempt to Sign in with Apple.")
@@ -166,31 +176,55 @@ class AgentAuth:
         task = "\n".join(task_components)
 
         return task, sensitive_data
-        
-    def lookup_password(self) -> str:
-        credential = self.credential_manager.get_credential(self.website, self.username)
-        if credential and credential.password:
-            return credential.password
-        else:
-            raise LookupError("No password found")
-  
-    def lookup_totp(self) -> str:
-        credential = self.credential_manager.get_credential(self.website, self.username)
-        if credential and credential.totp():
-            return credential.totp()
-        else:
-            raise LookupError("No TOTP found")
     
+    def _can_lookup_password(self) -> bool:
+        return bool(
+            self.credential_manager and 
+            self.credential_manager.get_credential(self.website, self.username) and
+            self.credential_manager.get_credential(self.website, self.username).password
+        )
+
+    def lookup_password(self) -> str:
+        if not self._can_lookup_password():
+            raise LookupError("Cannot lookup password")
+        
+        password = self.credential_manager.get_credential(self.website, self.username).password
+        logger.info("retrieved password", agent_id=self.agent_id)
+        return password
+  
+    def _can_lookup_totp(self) -> bool:
+        return bool(
+            self.credential_manager and 
+            self.credential_manager.get_credential(self.website, self.username) and
+            self.credential_manager.get_credential(self.website, self.username).totp()
+        )
+
+    def lookup_totp(self) -> str:
+        if not self._can_lookup_totp():
+            raise LookupError("Cannot lookup TOTP")
+
+        totp = self.credential_manager.get_credential(self.website, self.username).totp()
+        logger.info("retrieved TOTP", agent_id=self.agent_id)
+        return totp
+    
+    def _can_lookup_email_code(self) -> bool:
+        return bool(self.email_service)
+
     def lookup_email_code(self) -> str:
+        if not self._can_lookup_email_code():
+            raise LookupError("Cannot lookup email code")
+
         code = self.email_service.get_code(self.login_start_time)
-        if code:
-            return code
-        else:
-            raise LookupError("No email code found")
+        logger.info("retrieved email code", agent_id=self.agent_id)
+        return code
+
+    def _can_lookup_email_link(self) -> bool:
+        return bool(self.email_service)
 
     def lookup_email_link(self) -> str:
-        code = self.email_service.get_link(self.login_start_time)
-        if code:
-            return code
-        else:
-            raise LookupError("No email link found")
+        if not self._can_lookup_email_link():
+            raise LookupError("Cannot lookup email link")
+
+        link = self.email_service.get_link(self.login_start_time)
+        logger.info("retrieved email link", agent_id=self.agent_id)
+        return link
