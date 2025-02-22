@@ -48,11 +48,6 @@ class AgentAuth:
 
         self.agent_id = agent_id or generate_id()
 
-        self.controller = Controller()
-        self.controller.action("Look up the TOTP code")(self.lookup_totp)
-        self.controller.action("Look up the email code")(self.lookup_email_code)
-        self.controller.action("Look up the email link")(self.lookup_email_link)
-
         self.login_start_time = datetime.now(timezone.utc)
 
         self._setup_logging()
@@ -112,6 +107,7 @@ class AgentAuth:
 
         self.website = website
         self.username = username
+        self.controller = Controller()
 
         task, sensitive_data = self.build_auth_task(website, username)
 
@@ -152,12 +148,15 @@ class AgentAuth:
             task_components.append(f"""- If a password is needed, use the password "x_password" """)
 
         if self._can_lookup_totp():
+            self.controller.action("Look up the TOTP code")(self.lookup_totp)
             task_components.append("- If a TOTP code is needed, look up the TOTP code")
 
         if self._can_lookup_email_code():
+            self.controller.action("Look up the email code")(self.lookup_email_code)
             task_components.append("- If an email code is needed, look up the email code")
 
         if self._can_lookup_email_link():
+            self.controller.action("Look up the email link")(self.lookup_email_link)
             task_components.append("- If an email link is needed, look up the email link and navigate to the link")
 
         # Prevent social sign in for now... may revist this later
