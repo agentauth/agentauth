@@ -55,6 +55,7 @@ cookies = await aa.auth(
 
 - [ ] Add Bitwarden integration
 - [ ] Support local S/LLM for email scanning
+- [ ] Add automatic publishing
 
 # Contributing
 
