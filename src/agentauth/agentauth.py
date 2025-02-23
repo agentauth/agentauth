@@ -1,10 +1,12 @@
 from datetime import datetime, timezone
 import logging
+import os
 
 from browser_use import Agent, Browser, BrowserConfig
 from browser_use.controller.service import Controller
+from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_openai import ChatOpenAI
 
-from agentauth import llm
 from agentauth import logger
 from agentauth.credential_manager import CredentialManager
 from agentauth.email_service import EmailService
@@ -34,6 +36,7 @@ class AgentAuth:
     def __init__(
             self,
             credential_manager: CredentialManager = None,
+            llm: BaseChatModel = None,
             imap_server: str = None,
             imap_port: int = 993,
             imap_username: str = None,
@@ -42,9 +45,14 @@ class AgentAuth:
         ):
         self.credential_manager = credential_manager or CredentialManager()
         
+        if not llm and not os.getenv("OPENAI_API_KEY"):
+            raise RuntimeError("OPENAI_API_KEY environment variable not set. Please set this variable or provide a custom LLM with the `llm` parameter.")
+        
+        self.llm = llm or ChatOpenAI(model="gpt-4o", temperature=0.0)
+
         self.email_service = None
         if imap_server and imap_port and imap_username and imap_password:
-            self.email_service = EmailService(imap_server, imap_port, imap_username, imap_password)
+            self.email_service = EmailService(imap_server, imap_port, imap_username, imap_password, self.llm)
 
         self.agent_id = agent_id or generate_id()
 
@@ -113,7 +121,7 @@ class AgentAuth:
 
         agent = Agent(
             task=task,
-            llm=llm,
+            llm=self.llm,
             sensitive_data=sensitive_data,
             browser=browser,
             browser_context=browser_context,

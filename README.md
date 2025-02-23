@@ -49,12 +49,12 @@ cookies = await aa.auth(
 # Use cookies for authenticated agent actions
 ```
 
+**ℹ️ You can pass a custom LLM to the AgentAuth constructor. OpenAI's `gpt-4o` is the default and requires an `OPENAI_API_KEY` environment variable.**
+
 # To Do
 
 - [ ] Add Bitwarden integration
-- [ ] Add Keeper integration
-- [ ] Use local LLM for email scanning
-- [ ] Allow other LLMs
+- [ ] Support local S/LLM for email scanning
 
 # Contributing
 

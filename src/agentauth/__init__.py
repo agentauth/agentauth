@@ -1,7 +1,3 @@
-# Default to an OpenAI model. Note this requires the OPENAI_API_KEY environment variable.
-from langchain_openai import ChatOpenAI
-llm = ChatOpenAI(model="gpt-4o", temperature=0)
-
 import structlog
 
 structlog.configure(

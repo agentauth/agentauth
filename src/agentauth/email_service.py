@@ -1,15 +1,22 @@
 import time
 
 from imap_tools import MailBox
-
-from agentauth import llm
+from langchain_core.language_models.chat_models import BaseChatModel
 
 class EmailService:
-    def __init__(self, imap_server, imap_port, imap_username, imap_password):
+    def __init__(
+            self,
+            imap_server: str,
+            imap_port: int,
+            imap_username: str,
+            imap_password: str,
+            llm: BaseChatModel
+    ):
         self.imap_username = imap_username
         self.imap_password = imap_password
         self.imap_server = imap_server
         self.imap_port = imap_port
+        self.llm = llm
 
     def get_code(self, login_start_time) -> str:
         for _ in range(10):
@@ -26,7 +33,7 @@ class EmailService:
                     {msg.text}
                     ```
                     """
-                    response = llm.invoke(query).content
+                    response = self.llm.invoke(query).content
                     if response.lower() == "no":
                         next
                     else:
@@ -50,7 +57,7 @@ class EmailService:
                     {msg.text}
                     ```
                     """
-                    response = llm.invoke(query).content
+                    response = self.llm.invoke(query).content
                     if response.lower() == "no":
                         next
                     else:
@@ -59,4 +66,3 @@ class EmailService:
             time.sleep(3)
         
         return None
-    
