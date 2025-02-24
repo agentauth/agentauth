@@ -54,7 +54,6 @@ cookies = await aa.auth(
 # To Do
 
 - [ ] Add Bitwarden integration
-- [ ] Add Anchor Browser example
 - [ ] Support local S/LLM for email scanning
 - [ ] Add automatic publishing
 
