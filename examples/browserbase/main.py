@@ -11,12 +11,14 @@ load_dotenv(override=True)
 BROWSERBASE_API_KEY = os.getenv("BROWSERBASE_API_KEY")
 BROWSERBASE_PROJECT_ID = os.getenv("BROWSERBASE_PROJECT_ID")
 
-def get_browserbase_session():
+def get_browserbase_cdp_url():
     bb = Browserbase(api_key=BROWSERBASE_API_KEY)
     session = bb.sessions.create(project_id=BROWSERBASE_PROJECT_ID)
-    return session
+    return session.connect_url
 
 async def main():
+    browserbase_cdp_url = get_browserbase_cdp_url()
+
     # Create a new credential manager and load credentials file
     credential_manager = CredentialManager()
     credential_manager.load_json("credentials.json")
@@ -25,30 +27,24 @@ async def main():
     aa = AgentAuth(credential_manager=credential_manager)
 
     # Authenticate with a remote browser session; get the post-auth cookies
-    browserbase_session = get_browserbase_session()
     cookies = await aa.auth(
         "https://practice.expandtesting.com/login",
         "practice",
-        cdp_url=browserbase_session.connect_url
+        cdp_url=browserbase_cdp_url
     )
 
-    # Take some authenticated action(s) using the cookies
-    browserbase_session = get_browserbase_session()
+    # Load cookies into a new browser and load an authenticated page
     async with async_playwright() as playwright:
-        browser = await playwright.chromium.connect_over_cdp(browserbase_session.connect_url)
-
-        page = await browser.new_page()
-        await page.context.add_cookies(cookies)
+        browser = await playwright.chromium.launch(headless=False)
+        context = await browser.new_context()
+        
+        # Add the authenticated cookies
+        await context.add_cookies(cookies)
+        
+        page = await context.new_page()
         await page.goto("https://practice.expandtesting.com/secure")
-
-        # Check if we were redirected to the login page. If not, we should be logged in.
-        if page.url == "https://practice.expandtesting.com/login":
-            print("Not signed in...")
-        else:
-            element = page.locator('#username')
-            text = await element.text_content()
-            print(f"Page message: {text.strip()}")
-
+        
+        await page.wait_for_timeout(3000)
         await browser.close()
 
 if __name__ == "__main__":
