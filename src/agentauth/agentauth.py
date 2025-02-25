@@ -133,7 +133,12 @@ class AgentAuth:
         if not history.is_done():
             raise RuntimeError("Failed to authenticate")
         
-        logger.info("authentication successful", agent_id=self.agent_id)
+        logger.info(
+            "authentication successful",
+            agent_id=self.agent_id,
+            website=website,
+            username=username
+        )
 
         session = await browser_context.get_session()
         cookies =  await session.context.cookies()
@@ -196,7 +201,12 @@ class AgentAuth:
             raise LookupError("Cannot lookup password")
         
         password = self.credential_manager.get_credential(self.website, self.username).password
-        logger.info("retrieved password", agent_id=self.agent_id)
+        logger.info(
+            "retrieved password",
+            agent_id=self.agent_id,
+            website=self.website,
+            username=self.username
+        )
         return password
   
     def _can_lookup_totp(self) -> bool:
@@ -211,7 +221,12 @@ class AgentAuth:
             raise LookupError("Cannot lookup TOTP")
 
         totp = self.credential_manager.get_credential(self.website, self.username).totp()
-        logger.info("retrieved TOTP", agent_id=self.agent_id)
+        logger.info(
+            "retrieved TOTP",
+            agent_id=self.agent_id,
+            website=self.website,
+            username=self.username
+        )
         return totp
     
     def _can_lookup_email_code(self) -> bool:
@@ -222,7 +237,12 @@ class AgentAuth:
             raise LookupError("Cannot lookup email code")
 
         code = self.email_service.get_code(self.login_start_time)
-        logger.info("retrieved email code", agent_id=self.agent_id)
+        logger.info(
+            "retrieved email code",
+            agent_id=self.agent_id,
+            website=self.website,
+            username=self.username
+        )
         return code
 
     def _can_lookup_email_link(self) -> bool:
@@ -233,5 +253,10 @@ class AgentAuth:
             raise LookupError("Cannot lookup email link")
 
         link = self.email_service.get_link(self.login_start_time)
-        logger.info("retrieved email link", agent_id=self.agent_id)
+        logger.info(
+            "retrieved email link",
+            agent_id=self.agent_id,
+            website=self.website,
+            username=self.username
+        )
         return link
