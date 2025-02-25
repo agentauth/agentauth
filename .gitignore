@@ -1,6 +1,8 @@
 .env
 agent_history.gif
 agentauth.log
+screenshots/
+.DS_Store
 
 # Python-generated files
 __pycache__/
