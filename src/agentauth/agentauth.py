@@ -99,12 +99,9 @@ class AgentAuth:
             RuntimeError: If authentication fails
             LookupError: If required credentials are not found
         """
-        logger.info(
-            "login attempt initiated",
-            agent_id=self.agent_id,
-            website=website,
-            username=username
-        )
+        self.website = website
+        self.username = username
+        self.log_auth_event("started login attempt")
 
         browser_config = BrowserConfig(
             headless=headless,
@@ -113,10 +110,7 @@ class AgentAuth:
         browser = Browser(config=browser_config)
         browser_context = await browser.new_context()
 
-        self.website = website
-        self.username = username
         self.controller = Controller()
-
         task, sensitive_data = self.build_auth_task(website, username)
 
         agent = Agent(
@@ -133,12 +127,7 @@ class AgentAuth:
         if not history.is_done():
             raise RuntimeError("Failed to authenticate")
         
-        logger.info(
-            "authentication successful",
-            agent_id=self.agent_id,
-            website=website,
-            username=username
-        )
+        self.log_auth_event("authentication successful")
 
         session = await browser_context.get_session()
         cookies =  await session.context.cookies()
@@ -201,12 +190,7 @@ class AgentAuth:
             raise LookupError("Cannot lookup password")
         
         password = self.credential_manager.get_credential(self.website, self.username).password
-        logger.info(
-            "retrieved password",
-            agent_id=self.agent_id,
-            website=self.website,
-            username=self.username
-        )
+        self.log_auth_event("retrieved password")
         return password
   
     def _can_lookup_totp(self) -> bool:
@@ -221,12 +205,7 @@ class AgentAuth:
             raise LookupError("Cannot lookup TOTP")
 
         totp = self.credential_manager.get_credential(self.website, self.username).totp()
-        logger.info(
-            "retrieved TOTP",
-            agent_id=self.agent_id,
-            website=self.website,
-            username=self.username
-        )
+        self.log_auth_event("retrieved TOTP")
         return totp
     
     def _can_lookup_email_code(self) -> bool:
@@ -237,12 +216,7 @@ class AgentAuth:
             raise LookupError("Cannot lookup email code")
 
         code = self.email_service.get_code(self.login_start_time)
-        logger.info(
-            "retrieved email code",
-            agent_id=self.agent_id,
-            website=self.website,
-            username=self.username
-        )
+        self.log_auth_event("retreived email code", imap_username=self.email_service.imap_username)
         return code
 
     def _can_lookup_email_link(self) -> bool:
@@ -253,10 +227,14 @@ class AgentAuth:
             raise LookupError("Cannot lookup email link")
 
         link = self.email_service.get_link(self.login_start_time)
+        self.log_auth_event("retreived email link", imap_username=self.email_service.imap_username)
+        return link
+    
+    def log_auth_event(self, event: str, **kwargs):
         logger.info(
-            "retrieved email link",
+            event,
             agent_id=self.agent_id,
             website=self.website,
-            username=self.username
+            username=self.username,
+            **kwargs
         )
-        return link
