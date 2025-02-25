@@ -25,6 +25,8 @@ async def main():
 
     agentauth = AgentAuth(credential_manager=credential_manager)
 
+    test_results = {}
+
     for credential in credential_manager.credentials:
         WEBSITE = credential.website
         USERNAME = credential.username
@@ -34,7 +36,12 @@ async def main():
         try:
             cookies = await agentauth.auth(WEBSITE, USERNAME, cdp_url=cdp_url)
         except Exception as e:
-            print(f"Could not authenticate {WEBSITE} with {USERNAME}: {e}", file=sys.stderr)
+            print(f"Could not authenticate {WEBSITE} with {USERNAME}: {e}")
+            test_results[WEBSITE] = {
+                "username": USERNAME,
+                "status": "❌ Failed",
+                "screenshot": "",
+            }
             continue
 
         async with async_playwright() as playwright:
@@ -50,10 +57,25 @@ async def main():
 
             # Save screenshot
             os.makedirs("screenshots", exist_ok=True)
-            file_name = urlparse(WEBSITE).netloc.replace(".", "_")
-            await page.screenshot(path=f"screenshots/{file_name}.png")
+            file_name = f"screenshots/{urlparse(WEBSITE).netloc}_{os.urandom(4).hex()}.png"
+            await page.screenshot(path=file_name)
+
+            test_results[WEBSITE] = {
+                "username": USERNAME,
+                "status": "✅ Success",
+                "screenshot": file_name,
+            }
 
             await browser.close()
+
+    # Print test results as table
+    print("\nTest Results:")
+    print("-" * 100)
+    print(f"{'Website':<30} {'Username':<20} {'Status':<10} {'Screenshot'}")
+    print("-" * 100)
+    for website, result in test_results.items():
+        print(f"{website[:30]:<30} {result['username'][:20]:<20} {result['status']:<10} {result['screenshot']}")
+    print("-" * 100)
 
 if __name__ == "__main__":
     asyncio.run(main())
