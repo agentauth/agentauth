@@ -55,7 +55,6 @@ cookies = await aa.auth(
 
 - [ ] Add automatic publishing to PyPI
 - [ ] Add Bitwarden integration
-- [ ] Improve test infrastructure
 - [ ] Support local S/LLM for email scanning
 
 # Contributing

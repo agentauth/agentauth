@@ -1,7 +1,6 @@
 import asyncio
-import os
-import sys
 from urllib.parse import urlparse
+import os
 
 from agentauth import AgentAuth, CredentialManager
 from browserbase import Browserbase
@@ -45,7 +44,7 @@ async def main():
             continue
 
         async with async_playwright() as playwright:
-            browser = await playwright.chromium.launch(headless=False)
+            browser = await playwright.chromium.launch()
             context = await browser.new_context()
             
             # Add the authenticated cookies
