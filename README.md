@@ -10,7 +10,7 @@ AgentAuth is a Python package that helps automate web authentication by simulati
 
 - 🤖 **Automated Authentication**: Handles complex login flows automatically
 - 📧 **Email Integration**: Supports email-based verification (magic links and codes)
-- 🔐 **Password Manager Integration**: Works with 1Password and local credential storage
+- 🔐 **Password Manager Integration**: Works with 1Password, Bitwarden, and local credential storage
 - 🌐 **Browser Integration**: Compatible with remote CDP-based browsers
 
 ## Installation
@@ -28,6 +28,7 @@ from agentauth import AgentAuth, CredentialManager
 credential_manager = CredentialManager()
 credential_manager.load_file("credentials.json")
 credential_manager.load_1password("1password_service_account_token")
+credential_manager.load_bitwarden("bw_client_id", "bw_client_secret", "bw_master_password")
 
 # Creat an instance of AgentAuth with access to credentials and an email inbox
 aa = AgentAuth(
@@ -54,7 +55,6 @@ cookies = await aa.auth(
 # To Do
 
 - [ ] Add automatic publishing to PyPI
-- [ ] Add Bitwarden integration
 - [ ] Support local S/LLM for email scanning
 
 # Contributing
