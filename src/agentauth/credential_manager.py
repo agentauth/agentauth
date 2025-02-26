@@ -133,6 +133,21 @@ class CredentialManager:
         logger.info("loaded credential(s) from 1Password", count=len(new_credentials))
 
     def load_bitwarden(self, client_id: str, client_secret: str, master_password: str):
+        """
+        Load credentials from Bitwarden.
+
+        This method uses the Bitwarden CLI to authenticate and retrieve credentials. It requires the
+        Bitwarden CLI to be installed and accessible in the system PATH.
+
+        Args:
+            client_id (str): Bitwarden API client ID
+            client_secret (str): Bitwarden API client secret 
+            master_password (str): Master password for unlocking the Bitwarden vault
+
+        Raises:
+            RuntimeError: If Bitwarden CLI is not found or authentication fails
+            Exception: If credential extraction fails
+        """
         test_process = subprocess.run(['bw', '--version'], capture_output=True)
         if test_process.returncode != 0:
             raise RuntimeError("Bitwarden CLI not found")
