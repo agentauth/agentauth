@@ -1,4 +1,7 @@
 import json
+import os
+import re
+import subprocess
 from typing import List
 
 from onepassword.client import Client
@@ -128,6 +131,71 @@ class CredentialManager:
 
         self.credentials.extend(new_credentials)
         logger.info("loaded credential(s) from 1Password", count=len(new_credentials))
+
+    def load_bitwarden(self, client_id: str, client_secret: str, master_password: str):
+        test_process = subprocess.run(['bw', '--version'], capture_output=True)
+        if test_process.returncode != 0:
+            raise RuntimeError("Bitwarden CLI not found")
+
+        # Login to Bitwarden and unlock in one command
+        unlock_process = subprocess.run(
+            'bw login --apikey; bw sync; bw unlock --passwordenv BW_MASTER_PASSWORD',
+            shell=True,
+            capture_output=True,
+            text=True,
+            env={
+                'BW_CLIENTID': client_id,
+                'BW_CLIENTSECRET': client_secret,
+                'BW_MASTER_PASSWORD': master_password,
+                'PATH': os.environ['PATH']
+            }
+        )
+        if unlock_process.returncode != 0:
+            raise RuntimeError("Failed to login or unlock Bitwarden:", unlock_process.stderr)
+
+        # Extract session key
+        session_match = re.search(r'BW_SESSION="([^"]+)"', unlock_process.stdout)
+        if not session_match:
+            raise RuntimeError("Failed to retrieve session key from Bitwarden")
+        session_key = session_match.group(1)
+
+        # List all items using the session key
+        list_process = subprocess.run(
+            ['bw', 'list', 'items'], 
+            capture_output=True, 
+            text=True,
+            env={
+                'BW_SESSION': session_key,
+                'PATH': os.environ['PATH']
+            }
+        )
+        if list_process.returncode != 0:
+            raise RuntimeError("Failed to get items from Bitwarden:", list_process.stderr)
+
+        # Parse and process the items
+        items = json.loads(list_process.stdout)
+        new_credentials = []
+
+        for item in items:
+            # Skip items that don't have login information
+            if not item.get('login'):
+                continue
+            
+            login = item['login']
+            
+            # Get all URIs from the login
+            for uri_item in login.get('uris', []):
+                uri = uri_item.get('uri')
+                credential = Credential(
+                    website=uri,
+                    username=login.get('username'),
+                    password=login.get('password'),
+                    totp_secret=login.get('totp')
+                )
+                new_credentials.append(credential)
+
+        self.credentials.extend(new_credentials)
+        logger.info("loaded credential(s) from Bitwarden", count=len(new_credentials))
 
     def get_credential(self, website: str, username: str) -> Credential:
         """
