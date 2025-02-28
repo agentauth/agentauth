@@ -39,39 +39,6 @@ class CredentialManager:
         """
         self.credentials: List[Credential] = []
 
-    def load_json(self, file_path: str):
-        """
-        Load credentials from a JSON file.
-
-        The JSON file should contain an array of credential objects, each with:
-        - website: The website URL
-        - username: The username or email
-        - password: The password
-        - totp_secret: (optional) TOTP secret for 2FA
-
-        Args:
-            file_path (str): Path to the JSON credentials file
-
-        Raises:
-            FileNotFoundError: If the file doesn't exist
-            json.JSONDecodeError: If the file contains invalid JSON
-        """
-        new_credentials = []
-
-        with open(file_path, 'r') as file:
-            credentials_list = json.load(file)
-            for x in credentials_list:
-                credential = Credential(
-                    website=x.get("website"),
-                    username=x.get("username"),
-                    password=x.get("password"),
-                    totp_secret=x.get("totp_secret")
-                )
-                new_credentials.append(credential)
-        
-        self.credentials.extend(new_credentials)
-        logger.info("loaded credential(s) from JSON file", file_path=file_path, count=len(new_credentials))
-
     async def load_1password(self, service_account_token: str):
         """
         Load credentials from a 1Password account using the Connect server API.
@@ -211,6 +178,83 @@ class CredentialManager:
 
         self.credentials.extend(new_credentials)
         logger.info("loaded credential(s) from Bitwarden", count=len(new_credentials))
+
+    def load_credential(self, credential_dict: dict):
+        """
+        Load a single credential from a dictionary.
+
+        Args:
+            credential_dict (dict): Dictionary containing credential information with keys:
+                - website: The website URL (required)
+                - username: The username or email (required)
+                - password: The password (required)
+                - totp_secret: TOTP secret for 2FA (optional)
+        """
+        credential = Credential(
+            website=credential_dict.get('website'),
+            username=credential_dict.get('username'),
+            password=credential_dict.get('password'),
+            totp_secret=credential_dict.get('totp_secret')
+        )
+        self.credentials.append(credential)
+        logger.info("loaded credential", count=1)
+
+    def load_credentials(self, credential_list: List[dict]):
+        """
+        Load credentials from a list of dictionaries.
+
+        Args:
+            credential_list (List[dict]): List of dictionaries, each containing credential information with keys:
+                - website: The website URL (required)
+                - username: The username or email (required)
+                - password: The password (required)
+                - totp_secret: TOTP secret for 2FA (optional)
+        """
+        new_credentials = []
+        for credential_dict in credential_list:
+            credential = Credential(
+                website=credential_dict.get('website'),
+                username=credential_dict.get('username'),
+                password=credential_dict.get('password'),
+                totp_secret=credential_dict.get('totp_secret')
+            )
+            new_credentials.append(credential)
+        
+        self.credentials.extend(new_credentials)
+        logger.info("loaded credential(s) from list", count=len(new_credentials))
+
+    def load_json(self, file_path: str):
+        """
+        Load credentials from a JSON file.
+
+        The JSON file should contain an array of credential objects, each with:
+        - website: The website URL
+        - username: The username or email
+        - password: The password
+        - totp_secret: (optional) TOTP secret for 2FA
+
+        Args:
+            file_path (str): Path to the JSON credentials file
+
+        Raises:
+            FileNotFoundError: If the file doesn't exist
+            json.JSONDecodeError: If the file contains invalid JSON
+        """
+        new_credentials = []
+
+        with open(file_path, 'r') as file:
+            credentials_list = json.load(file)
+            for x in credentials_list:
+                credential = Credential(
+                    website=x.get("website"),
+                    username=x.get("username"),
+                    password=x.get("password"),
+                    totp_secret=x.get("totp_secret")
+                )
+                new_credentials.append(credential)
+        
+        self.credentials.extend(new_credentials)
+        logger.info("loaded credential(s) from JSON file", file_path=file_path, count=len(new_credentials))
 
     def get_credential(self, website: str, username: str) -> Credential:
         """
