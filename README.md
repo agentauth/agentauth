@@ -24,43 +24,93 @@ pip install agentauth
 ```python
 from agentauth import AgentAuth, CredentialManager
 
-# Load credentials from a file and/or password manager
+# Add credentials to a new credential manager
 credential_manager = CredentialManager()
-credential_manager.load_file("credentials.json")
-credential_manager.load_1password("1password_service_account_token")
-credential_manager.load_bitwarden("bw_client_id", "bw_client_secret", "bw_master_password")
+credential_manager.load_credential({
+    "website": "https://www.example.com",
+    "username": "user@example.com",
+    "password": "user_password"
+})
 
-# Creat an instance of AgentAuth with access to credentials and an email inbox
+# Create an instance of AgentAuth with access to credentials
+aa = AgentAuth(credential_manager=credential_manager)
+
+# Authenticate to a website for a given username
+cookies = await aa.auth("https://www.example.com", "user@example.com")
+
+# User is logged in! 🎉
+# Use cookies for authenticated agent actions... (see examples directory to see how)
+```
+
+**ℹ️ You can pass a custom LLM to the AgentAuth constructor. OpenAI's `gpt-4o` is the default and requires an `OPENAI_API_KEY` environment variable.**
+
+## Connecting an email inbox
+
+Many websites require an email step to authenticate. This could be for a magic link or login code, or it could be for email-based two-factor authentication. AgentAuth supports connecting an email inbox to handle these cases.
+
+```python
 aa = AgentAuth(
-    credential_manager=credential_manager,
-
-    # (Optional) Connect an email inbox for authentication requiring email links or codes
     imap_server="imap.example.com",
     imap_username="agent@example.com",
     imap_password="agent_email_password"
 )
 
-# Authenticate to a website for a given username
-cookies = await aa.auth(
-    "https://example.com",
-    "agent@example.com",
-    cdp_url="wss://..."  # Optional: for using remote browser services
-)
-
-# Use cookies for authenticated agent actions
+cookies = await aa.auth("https://www.example.com", "agent@example.com")
 ```
 
-**ℹ️ You can pass a custom LLM to the AgentAuth constructor. OpenAI's `gpt-4o` is the default and requires an `OPENAI_API_KEY` environment variable.**
+## Loading credentials from various sources
 
-# To Do
+```python
+from agentauth import AgentAuth, CredentialManager
+
+# Create a new credential manager
+credential_manager = CredentialManager()
+
+# Load credentials from 1Password
+credential_manager.load_1password(os.getenv("OP_SERVICE_ACCOUNT_TOKEN"))
+
+# Load credentials from Bitwarden
+credential_manager.load_bitwarden(
+    os.getenv("BW_CLIENT_ID"),
+    os.getenv("BW_CLIENT_SECRET"),
+    os.getenv("BW_MASTER_PASSWORD")
+)
+
+# Load credentials from a file
+credential_manager.load_file("credentials.json")
+
+# Load a single credential
+credential_manager.load_credential({
+    "website": "https://www.example.com",
+    "username": os.getenv("USERNAME"),
+    "password": os.getenv("PASSWORD")
+})
+
+# Load a list of credentials
+credential_manager.load_credentials([
+    {
+        "website": "https://www.example.com",
+        "username": os.getenv("EXAMPLE_USERNAME"),
+        "password": os.getenv("EXAMPLE_PASSWORD")
+    },
+    {
+        "website": "https://www.fakewebsite.com",
+        "username": os.getenv("FAKEWEBSITE_USERNAME"),
+        "password": os.getenv("FAKEWEBSITE_PASSWORD")
+    }
+])
+```
+
+## To Do
 
 - [ ] Add automatic publishing to PyPI
 - [ ] Support local S/LLM for email scanning
+- [ ] Add support for other password managers
 
-# Contributing
+## Contributing
 
 Contributions are welcome! Please feel free to submit a pull request.
 
-# License
+## License
 
 This project is licensed under the MIT License.
