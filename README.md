@@ -101,6 +101,23 @@ credential_manager.load_credentials([
 ])
 ```
 
+## Connecting to a remote browser
+
+Remote browser services like [Anchor Browser](https://anchorbrowser.io) and [Browserbase](https://browserbase.com) are very helpful to avoid bot detection during authentication. AgentAuth supports remote browsers by accepting a `cdp_url`. See more in the examples directory.
+
+```python
+aa = AgentAuth(
+    # Add credential manager and/or email config
+)
+
+# Automaticaly authenticate using a remote browser session
+cookies = await aa.auth(
+    "https://www.example.com",
+    "user@example.com",
+    cdp_url="wss://cdp_url..."
+)
+```
+
 ## To Do
 
 - [ ] Add automatic publishing to PyPI
