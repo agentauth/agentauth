@@ -5,13 +5,14 @@ AgentAuth is a Python package that helps automate web authentication by simulati
 - Time-based One-Time Passwords (TOTP)
 - Email magic links
 - Email verification codes
+- Dynamic and multiple-step login flows
 
 ## Features
 
 - 🤖 **Automated Authentication**: Handles complex login flows automatically
 - 📧 **Email Integration**: Supports email-based verification (magic links and codes)
 - 🔐 **Password Manager Integration**: Works with 1Password, Bitwarden, and local credential storage
-- 🌐 **Browser Integration**: Compatible with remote CDP-based browsers
+- 🌐 **Remote Browser Integration**: Compatible with remote CDP-based browsers to avoid bot detection
 
 ## Installation
 
@@ -83,7 +84,8 @@ credential_manager.load_file("credentials.json")
 credential_manager.load_credential({
     "website": "https://www.example.com",
     "username": os.getenv("USERNAME"),
-    "password": os.getenv("PASSWORD")
+    "password": os.getenv("PASSWORD"),
+    "totp_secret": os.getenv("TOTP_SECRET")  # Optional
 })
 
 # Load a list of credentials
@@ -91,7 +93,8 @@ credential_manager.load_credentials([
     {
         "website": "https://www.example.com",
         "username": os.getenv("EXAMPLE_USERNAME"),
-        "password": os.getenv("EXAMPLE_PASSWORD")
+        "password": os.getenv("EXAMPLE_PASSWORD"),
+        "totp_secret": os.getenv("EXAMPLE_TOTP_SECRET")  # Optional
     },
     {
         "website": "https://www.fakewebsite.com",
@@ -111,11 +114,31 @@ aa = AgentAuth(
 )
 
 # Automaticaly authenticate using a remote browser session
+cdp_url = get_remote_browser_session()
 cookies = await aa.auth(
     "https://www.example.com",
     "user@example.com",
-    cdp_url="wss://cdp_url..."
+    cdp_url=cdp_url
 )
+```
+
+## Accessing credentials directly
+
+You can access credential values directly from the `CredentialManager` class when you want to handle the authentication process manually. This is useful when you need more control over the login flow or when automatic authentication isn't suitable for your use case.
+
+```python
+from agentauth import CredentialManager
+
+credential_manager = CredentialManager()
+credential_manager.load_file("credentials.json")
+
+# Get a credential for a specific website and username
+credential = credential_manager.get_credential("https://www.example.com", "user@example.com")
+
+# Pull out credential values to use in a login flow
+username = credential.username
+password = credential.password
+totp_code = credential.totp()  # If there is a TOTP secret, this returns the current TOTP code
 ```
 
 ## To Do
