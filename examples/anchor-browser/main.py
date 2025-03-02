@@ -10,9 +10,6 @@ load_dotenv()
 ANCHOR_API_KEY = os.getenv("ANCHOR_API_KEY")
 
 async def main():
-    # Use this URL to connect to Anchor Browser
-    anchor_cdp_url = f"wss://connect.anchorbrowser.io?apiKey={ANCHOR_API_KEY}"
-
     # Create a new credential manager and load credentials file
     credential_manager = CredentialManager()
     credential_manager.load_json("credentials.json")
@@ -21,6 +18,7 @@ async def main():
     aa = AgentAuth(credential_manager=credential_manager)
 
     # Authenticate with a remote browser session; get the post-auth cookies
+    anchor_cdp_url = f"wss://connect.anchorbrowser.io?apiKey={ANCHOR_API_KEY}"
     cookies = await aa.auth(
         "https://practice.expandtesting.com/login",
         "practice",

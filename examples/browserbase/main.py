@@ -17,8 +17,6 @@ def get_browserbase_cdp_url():
     return session.connect_url
 
 async def main():
-    browserbase_cdp_url = get_browserbase_cdp_url()
-
     # Create a new credential manager and load credentials file
     credential_manager = CredentialManager()
     credential_manager.load_json("credentials.json")
@@ -27,6 +25,7 @@ async def main():
     aa = AgentAuth(credential_manager=credential_manager)
 
     # Authenticate with a remote browser session; get the post-auth cookies
+    browserbase_cdp_url = get_browserbase_cdp_url()
     cookies = await aa.auth(
         "https://practice.expandtesting.com/login",
         "practice",
