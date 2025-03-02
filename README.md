@@ -138,7 +138,7 @@ credential = credential_manager.get_credential("https://www.example.com", "user@
 # Pull out credential values to use in a login flow
 username = credential.username
 password = credential.password
-totp_code = credential.totp()  # If there is a TOTP secret, this returns the current TOTP code
+totp_code = credential.totp()  # If there is a TOTP secret, this returns the current code
 ```
 
 ## To Do
