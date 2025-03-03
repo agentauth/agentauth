@@ -13,7 +13,10 @@ BROWSERBASE_PROJECT_ID = os.getenv("BROWSERBASE_PROJECT_ID")
 
 def get_browserbase_cdp_url():
     bb = Browserbase(api_key=BROWSERBASE_API_KEY)
-    session = bb.sessions.create(project_id=BROWSERBASE_PROJECT_ID)
+    session = bb.sessions.create(
+        project_id=BROWSERBASE_PROJECT_ID,
+        proxies=True  # Optional, but helpful to avoid bot detection
+    )
     return session.connect_url
 
 async def main():
@@ -32,7 +35,8 @@ async def main():
         cdp_url=browserbase_cdp_url
     )
 
-    # Load cookies into a new browser and load an authenticated page
+    # We're now signed in! Load cookies into a new browser and proceed to take
+    # some authenticated actions...
     async with async_playwright() as playwright:
         browser = await playwright.chromium.launch(headless=False)
         context = await browser.new_context()
