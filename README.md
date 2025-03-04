@@ -13,6 +13,7 @@ AgentAuth is a Python package that helps automate web authentication by simulati
 - 📧 **Email Integration**: Supports email-based verification (magic links and codes)
 - 🔐 **Password Manager Integration**: Works with 1Password, Bitwarden, and local credential storage
 - 🌐 **Remote Browser Integration**: Compatible with remote CDP-based browsers to avoid bot detection
+- 📝 **Audit Logging**: Logs for credential access and authentication attempts
 
 ## Installation
 
@@ -146,6 +147,7 @@ totp_code = credential.totp()  # If there is a TOTP secret, this returns the cur
 - [ ] Add automatic publishing to PyPI
 - [ ] Support local S/LLM for email scanning
 - [ ] Add support for other password managers
+- [ ] Add passkey support
 
 ## Contributing
 
